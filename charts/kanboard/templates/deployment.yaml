@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ include "kanboard.fullname" . }}
+
+  labels:
+    {{- include "kanboard.labels" . | nindent 4 }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      {{- include "kanboard.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "kanboard.selectorLabels" . | nindent 8 }}
+
+    spec:
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: kanboard
+
+          image: "{{ .Values.image.repository }}:{{ required "image.tag must contain an immutable Kanboard image tag" .Values.image.tag }}"
+
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "postgres.existingSecret must be configured" .Values.postgres.existingSecret | quote }}
+                  key: {{ required "postgres.databaseUrlKey must be configured" .Values.postgres.databaseUrlKey | quote }}
+
+            - name: DEBUG
+              value: {{ .Values.application.debug | quote }}
+
+            - name: PLUGIN_INSTALLER
+              value: {{ .Values.application.pluginInstaller | quote }}
+
+          startupProbe:
+            httpGet:
+              path: /healthcheck.php
+              port: http
+
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /healthcheck.php
+              port: http
+
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /healthcheck.php
+              port: http
+
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          {{- if or .Values.persistence.data.enabled .Values.persistence.plugins.enabled }}
+          volumeMounts:
+            {{- if .Values.persistence.data.enabled }}
+            - name: data
+              mountPath: /var/www/app/data
+            {{- end }}
+
+            {{- if .Values.persistence.plugins.enabled }}
+            - name: plugins
+              mountPath: /var/www/app/plugins
+            {{- end }}
+          {{- end }}
+
+      {{- if or .Values.persistence.data.enabled .Values.persistence.plugins.enabled }}
+      volumes:
+        {{- if .Values.persistence.data.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "kanboard.dataPvcName" . }}
+        {{- end }}
+
+        {{- if .Values.persistence.plugins.enabled }}
+        - name: plugins
+          persistentVolumeClaim:
+            claimName: {{ include "kanboard.pluginsPvcName" . }}
+        {{- end }}
+      {{- end }}

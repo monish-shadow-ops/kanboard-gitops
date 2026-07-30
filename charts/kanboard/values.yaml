@@ -1,13 +1,24 @@
+# Optional overrides for Kubernetes resource names.
+nameOverride: ""
+fullnameOverride: ""
+
+# Kanboard uses persistent ReadWriteOnce volumes,
+# so we begin with one application replica.
 replicaCount: 1
 
 image:
   repository: monishs2722/kanboard-cicd
+
+  # The production SHA tag will be supplied using
+  # values-production.yaml or Argo CD.
   tag: ""
+
   pullPolicy: IfNotPresent
 
 application:
-  hostname: monish.kubeace.in
   debug: "false"
+
+  # Keep web-based plugin installation disabled.
   pluginInstaller: "false"
 
 service:
@@ -19,6 +30,7 @@ resources:
   requests:
     cpu: 200m
     memory: 256Mi
+
   limits:
     cpu: "1"
     memory: 1Gi
@@ -46,7 +58,11 @@ postgres:
 
   database: kanboard
   username: kanboard
+
+  # This Secret will be created later by External Secrets
+  # or manually for initial testing.
   existingSecret: postgres-secret
+  databaseUrlKey: database-url
 
   persistence:
     enabled: true
@@ -57,6 +73,7 @@ postgres:
     requests:
       cpu: 250m
       memory: 512Mi
+
     limits:
       cpu: "1"
       memory: 1Gi

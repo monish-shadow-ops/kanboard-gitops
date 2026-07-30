@@ -1,0 +1,22 @@
+{{- if .Values.persistence.plugins.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: {{ include "kanboard.pluginsPvcName" . }}
+
+  labels:
+    {{- include "kanboard.labels" . | nindent 4 }}
+
+spec:
+  accessModes:
+    - {{ .Values.persistence.plugins.accessMode | quote }}
+
+  storageClassName: {{ .Values.persistence.storageClassName | quote }}
+
+  volumeMode: Filesystem
+
+  resources:
+    requests:
+      storage: {{ .Values.persistence.plugins.size }}
+{{- end }}
