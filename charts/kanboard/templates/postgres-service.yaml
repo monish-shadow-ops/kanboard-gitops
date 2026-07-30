@@ -1,0 +1,22 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "kanboard.postgresName" . }}
+
+  labels:
+    {{- include "kanboard.postgresLabels" . | nindent 4 }}
+
+spec:
+  type: ClusterIP
+
+  ports:
+    - name: postgres
+      port: {{ .Values.postgres.service.port }}
+      targetPort: postgres
+      protocol: TCP
+
+  selector:
+    {{- include "kanboard.postgresSelectorLabels" . | nindent 4 }}
+{{- end }}

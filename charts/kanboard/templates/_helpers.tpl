@@ -7,13 +7,6 @@ Return the chart name.
 
 {{/*
 Return the fully qualified application name.
-
-Examples:
-Release name: production
-Chart name: kanboard
-
-Result:
-production-kanboard
 */}}
 {{- define "kanboard.fullname" -}}
 {{- if .Values.fullnameOverride }}
@@ -36,7 +29,7 @@ Return the chart name and chart version.
 {{- end }}
 
 {{/*
-Common labels included on all Kanboard resources.
+Common Kanboard labels.
 */}}
 {{- define "kanboard.labels" -}}
 helm.sh/chart: {{ include "kanboard.chart" . }}
@@ -46,23 +39,59 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Stable labels used by the Service and Deployment selector.
+Kanboard selector labels.
+These labels must remain stable because the Deployment
+and Service use them to find the application Pods.
 */}}
 {{- define "kanboard.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "kanboard.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: web
 {{- end }}
 
 {{/*
-Name of the Kanboard application data PVC.
+Kanboard application data PVC name.
 */}}
 {{- define "kanboard.dataPvcName" -}}
 {{- printf "%s-data" (include "kanboard.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Name of the Kanboard plugins PVC.
+Kanboard plugins PVC name.
 */}}
 {{- define "kanboard.pluginsPvcName" -}}
 {{- printf "%s-plugins" (include "kanboard.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+PostgreSQL StatefulSet and client Service name.
+*/}}
+{{- define "kanboard.postgresName" -}}
+{{- printf "%s-postgres" (include "kanboard.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+PostgreSQL headless Service name.
+*/}}
+{{- define "kanboard.postgresHeadlessName" -}}
+{{- printf "%s-postgres-headless" (include "kanboard.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Stable PostgreSQL selector labels.
+*/}}
+{{- define "kanboard.postgresSelectorLabels" -}}
+app.kubernetes.io/name: {{ include "kanboard.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: database
+{{- end }}
+
+{{/*
+Common PostgreSQL labels.
+*/}}
+{{- define "kanboard.postgresLabels" -}}
+helm.sh/chart: {{ include "kanboard.chart" . }}
+{{ include "kanboard.postgresSelectorLabels" . }}
+app.kubernetes.io/version: {{ .Values.postgres.image.tag | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}

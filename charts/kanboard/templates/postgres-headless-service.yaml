@@ -1,0 +1,24 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "kanboard.postgresHeadlessName" . }}
+
+  labels:
+    {{- include "kanboard.postgresLabels" . | nindent 4 }}
+
+spec:
+  clusterIP: None
+
+  publishNotReadyAddresses: true
+
+  ports:
+    - name: postgres
+      port: {{ .Values.postgres.service.port }}
+      targetPort: postgres
+      protocol: TCP
+
+  selector:
+    {{- include "kanboard.postgresSelectorLabels" . | nindent 4 }}
+{{- end }}

@@ -1,0 +1,134 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: {{ include "kanboard.postgresName" . }}
+
+  labels:
+    {{- include "kanboard.postgresLabels" . | nindent 4 }}
+
+spec:
+  serviceName: {{ include "kanboard.postgresHeadlessName" . }}
+
+  replicas: 1
+
+  podManagementPolicy: OrderedReady
+
+  updateStrategy:
+    type: RollingUpdate
+
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+
+  selector:
+    matchLabels:
+      {{- include "kanboard.postgresSelectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "kanboard.postgresSelectorLabels" . | nindent 8 }}
+
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.postgres.terminationGracePeriodSeconds }}
+
+      securityContext:
+        {{- toYaml .Values.postgres.podSecurityContext | nindent 8 }}
+
+      containers:
+        - name: postgres
+
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+
+          securityContext:
+            {{- toYaml .Values.postgres.containerSecurityContext | nindent 12 }}
+
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.postgres.service.port }}
+              protocol: TCP
+
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.username | quote }}
+
+            - name: POSTGRES_PASSWORD
+
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "postgres.existingSecret must be configured" .Values.postgres.existingSecret | quote }}
+                  key: {{ required "postgres.passwordKey must be configured" .Values.postgres.passwordKey | quote }}
+
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+
+  {{- if .Values.postgres.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+
+        labels:
+          {{- include "kanboard.postgresLabels" . | nindent 10 }}
+
+      spec:
+        accessModes:
+          - {{ .Values.postgres.persistence.accessMode | quote }}
+
+        storageClassName: {{ .Values.postgres.persistence.storageClassName | quote }}
+
+        volumeMode: Filesystem
+
+        resources:
+          requests:
+            storage: {{ .Values.postgres.persistence.size }}
+  {{- end }}
+{{- end }}

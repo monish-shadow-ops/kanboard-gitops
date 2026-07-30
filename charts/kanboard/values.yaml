@@ -2,15 +2,15 @@
 nameOverride: ""
 fullnameOverride: ""
 
-# Kanboard uses persistent ReadWriteOnce volumes,
-# so we begin with one application replica.
+# We use one Kanboard replica because the application volumes
+# currently use EBS ReadWriteOnce storage.
 replicaCount: 1
 
 image:
   repository: monishs2722/kanboard-cicd
 
-  # The production SHA tag will be supplied using
-  # values-production.yaml or Argo CD.
+  # Argo CD or values-production.yaml will provide the
+  # immutable SHA image tag.
   tag: ""
 
   pullPolicy: IfNotPresent
@@ -18,7 +18,7 @@ image:
 application:
   debug: "false"
 
-  # Keep web-based plugin installation disabled.
+  # Keep installation of plugins through the web interface disabled.
   pluginInstaller: "false"
 
 service:
@@ -36,6 +36,7 @@ resources:
     memory: 1Gi
 
 persistence:
+  # This StorageClass will be created when EBS CSI is configured.
   storageClassName: gp3-encrypted-retain
 
   data:
@@ -59,15 +60,31 @@ postgres:
   database: kanboard
   username: kanboard
 
-  # This Secret will be created later by External Secrets
-  # or manually for initial testing.
+  # The chart does not create this Secret.
+  # It will be supplied securely during deployment.
   existingSecret: postgres-secret
+
+  # Key used by the PostgreSQL container.
+  passwordKey: postgres-password
+
+  # Key used by the Kanboard Deployment.
   databaseUrlKey: database-url
+
+  service:
+    port: 5432
 
   persistence:
     enabled: true
+    storageClassName: gp3-encrypted-retain
     accessMode: ReadWriteOnce
     size: 10Gi
+
+  terminationGracePeriodSeconds: 60
+
+  podSecurityContext: {}
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
 
   resources:
     requests:
