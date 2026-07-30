@@ -1,0 +1,12 @@
+# Packaged Helm chart archives
+*.tgz
+
+# Locally rendered manifests
+rendered-*.yaml
+
+# Local Helm temporary files
+*.tmp
+
+# Editor files
+*.swp
+.DS_Store

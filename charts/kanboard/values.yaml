@@ -1,0 +1,76 @@
+replicaCount: 1
+
+image:
+  repository: monishs2722/kanboard-cicd
+  tag: ""
+  pullPolicy: IfNotPresent
+
+application:
+  hostname: monish.kubeace.in
+  debug: "false"
+  pluginInstaller: "false"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+persistence:
+  storageClassName: gp3-encrypted-retain
+
+  data:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+  plugins:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 2Gi
+
+postgres:
+  enabled: true
+
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+
+  database: kanboard
+  username: kanboard
+  existingSecret: postgres-secret
+
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+gateway:
+  enabled: true
+  className: eg
+  name: kanboard-gateway
+
+  listener:
+    name: http
+    protocol: HTTP
+    port: 80
+
+httpRoute:
+  enabled: true
+  hostname: monish.kubeace.in
