@@ -1,0 +1,49 @@
+replicaCount: 1
+
+image:
+  repository: monishs2722/kanboard-cicd
+  tag: "sha-56cc02ba7673"
+  pullPolicy: IfNotPresent
+
+application:
+  debug: "false"
+  pluginInstaller: "false"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+
+persistence:
+  storageClassName: gp3-encrypted-retain
+
+  data:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+  plugins:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 2Gi
+
+postgres:
+  enabled: true
+  existingSecret: postgres-secret
+  passwordKey: postgres-password
+  databaseUrlKey: database-url
+
+  persistence:
+    enabled: true
+    storageClassName: gp3-encrypted-retain
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+gateway:
+  enabled: true
+  className: eg
+  name: kanboard-gateway
+
+httpRoute:
+  enabled: true
+  hostname: app.kubeace.in

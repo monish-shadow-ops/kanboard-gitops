@@ -1,0 +1,38 @@
+{{- if and .Values.gateway.enabled .Values.httpRoute.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+
+metadata:
+  name: {{ printf "%s-route" (include "kanboard.fullname" .) | trunc 63 | trimSuffix "-" }}
+
+  labels:
+    {{- include "kanboard.labels" . | nindent 4 }}
+
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+
+      name: {{ required "gateway.name must be configured" .Values.gateway.name }}
+
+      sectionName: {{ required "gateway.listener.name must be configured" .Values.gateway.listener.name }}
+
+  hostnames:
+    - {{ required "httpRoute.hostname must be configured" .Values.httpRoute.hostname | quote }}
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - group: ""
+          kind: Service
+
+          name: {{ include "kanboard.fullname" . }}
+
+          port: {{ .Values.service.port }}
+
+          weight: 1
+{{- end }}

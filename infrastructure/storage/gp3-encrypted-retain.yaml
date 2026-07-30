@@ -1,0 +1,28 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+
+metadata:
+  name: gp3-encrypted-retain
+
+  labels:
+    app.kubernetes.io/name: gp3-encrypted-retain
+    app.kubernetes.io/part-of: kanboard-platform
+
+# Standard Amazon EBS CSI driver provisioner.
+# This is different from the EKS Auto Mode provisioner.
+provisioner: ebs.csi.aws.com
+
+parameters:
+  type: gp3
+  encrypted: "true"
+  csi.storage.k8s.io/fstype: ext4
+
+# Keep the EBS volume if its PVC is accidentally deleted.
+reclaimPolicy: Retain
+
+# Wait until a Pod is scheduled before selecting an
+# availability zone and creating the EBS volume.
+volumeBindingMode: WaitForFirstConsumer
+
+# Permit PVC storage expansion later.
+allowVolumeExpansion: true

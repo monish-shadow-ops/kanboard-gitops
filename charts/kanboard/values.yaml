@@ -107,4 +107,4 @@ gateway:
 
 httpRoute:
   enabled: true
-  hostname: monish.kubeace.in
+  hostname: app.kubeace.in
