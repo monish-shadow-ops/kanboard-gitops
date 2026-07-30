@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: kanboard-storage
+  namespace: argocd
+
+  labels:
+    app.kubernetes.io/name: kanboard-storage
+    app.kubernetes.io/part-of: kanboard-platform
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/monish-shadow-ops/kanboard-gitops.git
+    targetRevision: main
+    path: infrastructure/storage
+
+    directory:
+      recurse: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+
+    retry:
+      limit: 5
+
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

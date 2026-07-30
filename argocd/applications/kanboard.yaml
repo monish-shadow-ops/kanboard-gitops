@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: kanboard
+  namespace: argocd
+
+  labels:
+    app.kubernetes.io/name: kanboard
+    app.kubernetes.io/part-of: kanboard-platform
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/monish-shadow-ops/kanboard-gitops.git
+    targetRevision: main
+    path: charts/kanboard
+
+    helm:
+      releaseName: kanboard
+
+      valueFiles:
+        - values-production.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kanboard
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PruneLast=true
+
+    managedNamespaceMetadata:
+      labels:
+        app.kubernetes.io/name: kanboard
+        app.kubernetes.io/part-of: kanboard-platform
+
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/enforce-version: latest
+
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/audit-version: latest
+
+        pod-security.kubernetes.io/warn: restricted
+        pod-security.kubernetes.io/warn-version: latest
+
+    retry:
+      limit: 5
+
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
