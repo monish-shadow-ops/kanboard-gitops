@@ -1,0 +1,56 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: kanboard-eks
+  region: ap-south-1
+  version: "1.36"
+
+  tags:
+    Project: Kanboard-GitOps
+    Environment: production
+    ManagedBy: eksctl
+
+iam:
+  withOIDC: true
+
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+
+  publicAccessCIDRs:
+    - "106.51.205.250/32"
+
+  nat:
+    gateway: Single
+
+managedNodeGroups:
+  - name: kanboard-nodes
+
+    instanceType: t3.medium
+    amiFamily: AmazonLinux2023
+
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 4
+
+    privateNetworking: true
+
+    volumeSize: 30
+    volumeType: gp3
+    volumeEncrypted: true
+
+    disableIMDSv1: true
+
+    labels:
+      workload: general
+      nodegroup: kanboard-nodes
+
+    tags:
+      Project: Kanboard-GitOps
+      Environment: production
+      NodeGroup: kanboard-nodes
+
+    updateConfig:
+      maxUnavailable: 1
