@@ -32,7 +32,6 @@ spec:
 
       tls:
         mode: Terminate
-
         certificateRefs:
           - group: ""
             kind: Secret
@@ -40,6 +39,9 @@ spec:
 
       allowedRoutes:
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access: allowed
     {{- end }}
 {{- end }}
