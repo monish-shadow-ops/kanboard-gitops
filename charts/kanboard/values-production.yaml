@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: monishs2722/kanboard-cicd
-  tag: "sha-56cc02ba7673"
+  tag: "sha-9a9edfd9fa14"
   pullPolicy: IfNotPresent
 
 application:
