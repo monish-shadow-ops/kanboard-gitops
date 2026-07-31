@@ -1,0 +1,29 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+
+metadata:
+  name: letsencrypt-staging
+
+  labels:
+    app.kubernetes.io/name: letsencrypt-staging
+    app.kubernetes.io/component: certificate-issuer
+    app.kubernetes.io/part-of: kanboard-platform
+
+spec:
+  acme:
+    email: 
+
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: kanboard-gateway
+                namespace: kanboard
+                kind: Gateway
+                group: gateway.networking.k8s.io
+                sectionName: http

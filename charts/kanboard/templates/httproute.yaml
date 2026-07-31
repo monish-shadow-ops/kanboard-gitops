@@ -1,10 +1,9 @@
-{{- if and .Values.gateway.enabled .Values.httpRoute.enabled }}
+{{- if .Values.httpRoute.enabled }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 
 metadata:
-  name: {{ printf "%s-route" (include "kanboard.fullname" .) | trunc 63 | trimSuffix "-" }}
-
+  name: {{ include "kanboard.fullname" . }}-route
   labels:
     {{- include "kanboard.labels" . | nindent 4 }}
 
@@ -12,13 +11,11 @@ spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-
-      name: {{ required "gateway.name must be configured" .Values.gateway.name }}
-
-      sectionName: {{ required "gateway.listener.name must be configured" .Values.gateway.listener.name }}
+      name: {{ .Values.gateway.name }}
+      sectionName: {{ ternary "https" "http" .Values.tls.enabled }}
 
   hostnames:
-    - {{ required "httpRoute.hostname must be configured" .Values.httpRoute.hostname | quote }}
+    - {{ .Values.httpRoute.hostname | quote }}
 
   rules:
     - matches:
@@ -29,10 +26,7 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
-
           name: {{ include "kanboard.fullname" . }}
-
           port: {{ .Values.service.port }}
-
           weight: 1
 {{- end }}

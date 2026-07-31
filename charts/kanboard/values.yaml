@@ -108,3 +108,9 @@ gateway:
 httpRoute:
   enabled: true
   hostname: app.kubeace.in
+
+tls:
+  enabled: false
+  clusterIssuer: letsencrypt-staging
+  secretName: app-kubeace-in-tls
+  redirectHTTPToHTTPS: false

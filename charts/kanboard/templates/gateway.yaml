@@ -3,28 +3,43 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 
 metadata:
-  name: {{ required "gateway.name must be configured" .Values.gateway.name }}
-
+  name: {{ .Values.gateway.name }}
   labels:
     {{- include "kanboard.labels" . | nindent 4 }}
+  {{- if .Values.tls.enabled }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.tls.clusterIssuer | quote }}
+  {{- end }}
 
 spec:
-  gatewayClassName: {{ required "gateway.className must be configured" .Values.gateway.className }}
+  gatewayClassName: {{ .Values.gateway.className }}
 
   listeners:
-    - name: {{ required "gateway.listener.name must be configured" .Values.gateway.listener.name }}
-
-      protocol: {{ required "gateway.listener.protocol must be configured" .Values.gateway.listener.protocol }}
-
-      port: {{ required "gateway.listener.port must be configured" .Values.gateway.listener.port }}
-
-      hostname: {{ required "httpRoute.hostname must be configured" .Values.httpRoute.hostname | quote }}
+    - name: http
+      hostname: {{ .Values.httpRoute.hostname | quote }}
+      protocol: HTTP
+      port: 80
 
       allowedRoutes:
         namespaces:
           from: Same
 
-        kinds:
-          - group: gateway.networking.k8s.io
-            kind: HTTPRoute
+    {{- if .Values.tls.enabled }}
+    - name: https
+      hostname: {{ .Values.httpRoute.hostname | quote }}
+      protocol: HTTPS
+      port: 443
+
+      tls:
+        mode: Terminate
+
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: {{ .Values.tls.secretName }}
+
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- end }}
 {{- end }}
