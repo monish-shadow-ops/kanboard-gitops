@@ -1,0 +1,27 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+
+metadata:
+  name: efs-rwx
+  labels:
+    app.kubernetes.io/name: efs-rwx
+    app.kubernetes.io/component: shared-storage
+    app.kubernetes.io/part-of: kanboard-platform
+
+provisioner: efs.csi.aws.com
+
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-09a7b591bb50351a4
+  directoryPerms: "750"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/kanboard"
+  ensureUniqueDirectory: "true"
+
+mountOptions:
+  - tls
+
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: false
