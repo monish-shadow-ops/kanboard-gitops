@@ -3,18 +3,17 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 
 metadata:
-  name: {{ include "kanboard.dataPvcName" . }}
+  name: {{ required "persistence.data.claimName is required" .Values.persistence.data.claimName }}
 
   labels:
     {{- include "kanboard.labels" . | nindent 4 }}
+    app.kubernetes.io/component: data-storage
 
 spec:
   accessModes:
-    - {{ .Values.persistence.data.accessMode | quote }}
+    {{- toYaml .Values.persistence.data.accessModes | nindent 4 }}
 
-  storageClassName: {{ .Values.persistence.storageClassName | quote }}
-
-  volumeMode: Filesystem
+  storageClassName: {{ required "persistence.data.storageClass is required" .Values.persistence.data.storageClass | quote }}
 
   resources:
     requests:

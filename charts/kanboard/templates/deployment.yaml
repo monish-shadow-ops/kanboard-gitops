@@ -10,8 +10,16 @@ metadata:
 spec:
   replicas: {{ .Values.replicaCount }}
 
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  minReadySeconds: {{ .Values.deployment.minReadySeconds }}
+  progressDeadlineSeconds: {{ .Values.deployment.progressDeadlineSeconds }}
+
   strategy:
-    type: Recreate
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxUnavailable: {{ .Values.deployment.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.deployment.rollingUpdate.maxSurge }}
 
   selector:
     matchLabels:
@@ -23,7 +31,47 @@ spec:
         {{- include "kanboard.selectorLabels" . | nindent 8 }}
 
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds }}
+
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+
+              preference:
+                matchExpressions:
+                  - key: workload
+                    operator: In
+                    values:
+                      - general
+
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "kanboard.selectorLabels" . | nindent 20 }}
+
+                topologyKey: kubernetes.io/hostname
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+
+          labelSelector:
+            matchLabels:
+              {{- include "kanboard.selectorLabels" . | nindent 14 }}
+
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+
+          labelSelector:
+            matchLabels:
+              {{- include "kanboard.selectorLabels" . | nindent 14 }}
 
       containers:
         - name: kanboard
@@ -49,6 +97,14 @@ spec:
 
             - name: PLUGIN_INSTALLER
               value: {{ .Values.application.pluginInstaller | quote }}
+
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep 10
 
           startupProbe:
             httpGet:
@@ -98,12 +154,12 @@ spec:
         {{- if .Values.persistence.data.enabled }}
         - name: data
           persistentVolumeClaim:
-            claimName: {{ include "kanboard.dataPvcName" . }}
+            claimName: {{ required "persistence.data.claimName is required" .Values.persistence.data.claimName | quote }}
         {{- end }}
 
         {{- if .Values.persistence.plugins.enabled }}
         - name: plugins
           persistentVolumeClaim:
-            claimName: {{ include "kanboard.pluginsPvcName" . }}
+            claimName: {{ required "persistence.plugins.claimName is required" .Values.persistence.plugins.claimName | quote }}
         {{- end }}
       {{- end }}

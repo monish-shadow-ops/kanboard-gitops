@@ -1,0 +1,34 @@
+replicaCount: 3
+
+deployment:
+  revisionHistoryLimit: 5
+  minReadySeconds: 10
+  progressDeadlineSeconds: 600
+  terminationGracePeriodSeconds: 60
+
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+persistence:
+  data:
+    enabled: true
+    claimName: kanboard-data-rwx
+    storageClass: efs-rwx
+    size: 10Gi
+
+    accessModes:
+      - ReadWriteMany
+
+  plugins:
+    enabled: true
+    claimName: kanboard-plugins-rwx
+    storageClass: efs-rwx
+    size: 2Gi
+
+    accessModes:
+      - ReadWriteMany
