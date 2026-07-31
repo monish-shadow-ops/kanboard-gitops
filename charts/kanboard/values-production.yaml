@@ -50,6 +50,6 @@ httpRoute:
 
 tls:
   enabled: true
-  clusterIssuer: letsencrypt-staging
+  clusterIssuer: letsencrypt-prod
   secretName: app-kubeace-in-tls
   redirectHTTPToHTTPS: true
